@@ -11,6 +11,11 @@ import shutil
 from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 
+try:
+    from scripts.content import build_articles, article_cards, ingest_article, validate_article
+except ModuleNotFoundError:
+    from content import build_articles, article_cards, ingest_article, validate_article
+
 ROOT = Path(__file__).resolve().parents[1]
 TOPICS = {'overview':'今日总览','finance':'金融与市场','technology':'科技与产业','ai-rsi':'AI与RSI','actions':'风险与行动'}
 
@@ -117,7 +122,31 @@ def markdown(body,fragment_base=''):
     return '\n'.join(result)
 
 def shell(title,body,base,relative=''):
-    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} · 每日观察</title><link rel="stylesheet" href="{relative}assets/style.css"><link rel="alternate" type="application/rss+xml" title="每日观察完整日报" href="{base}/feed.xml"></head><body><header><a class="brand" href="{relative}index.html">◈ 每日观察 <small>DAILY / PERSPECTIVES</small></a><nav><a href="{relative}index.html">完整日报</a><a href="{relative}topics/finance.html">金融</a><a href="{relative}topics/technology.html">科技</a><a href="{relative}topics/ai-rsi.html">AI / RSI</a><a href="{relative}compare.html">Top10</a><a href="{relative}feed.xml">RSS ↗</a></nav></header>{body}<footer>金融 · 科技 · AI与研究 · 保留每一次判断<br>同一份完整日报，多个阅读维度。观点与数据以各期标注为准，研究记录仅供参考。</footer></body></html>'''
+    return f'''<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(title)} · 每日观察</title>
+<link rel="stylesheet" href="{relative}assets/style.css">
+<link rel="alternate" type="application/rss+xml" title="每日观察完整日报" href="{base}/feed.xml">
+</head>
+<body>
+<header>
+<a class="brand" href="{relative}index.html">◈ 每日观察 <small>DAILY / PERSPECTIVES</small>
+</a>
+<nav>
+<a href="{relative}daily.html">每日简报</a>
+<a href="{relative}research.html">RSI研究</a>
+<a href="{relative}topics/technology.html">科技与AI</a>
+<a href="{relative}topics/finance.html">金融与投资</a>
+<a href="{relative}notes.html">专题笔记</a>
+<a href="{relative}compare.html">Top10</a>
+<a href="{relative}feed.xml">RSS ↗</a>
+</nav>
+</header>{body}<footer>金融 · 科技 · AI与研究 · 保留每一次判断<br>同一份完整日报，多个阅读维度。观点与数据以各期标注为准，研究记录仅供参考。</footer>
+</body>
+</html>'''
 
 def build(root, base):
     base=base.rstrip('/')
@@ -132,6 +161,7 @@ def build(root, base):
         if asset.is_file(): shutil.copy(asset,out/'assets'/asset.name)
     reports=[]
     for path in sorted((root/'reports').glob('*/*/*.json'),reverse=True): reports.append(validate(json.loads(path.read_text())))
+    articles=build_articles(root,out,base,shell,markdown)
     index=[]
     for i,r in enumerate(reports):
         prior=reports[i+1] if i+1<len(reports) else None
@@ -149,14 +179,53 @@ def build(root, base):
         shutil.copy(raw,dest/raw.name);shutil.copy(raw.with_suffix('.md'),dest/raw.with_suffix('.md').name)
         prefix=f"{r['date'][:4]}/{r['date'][5:7]}/{r['date']}"
         toc='<div class="topic-links">'+''.join(f'<a href="#{p["id"]}">{p["title"]}</a>' for p in parts)+'</div>' if parts else ''
-        body=f'''<main class="article"><a class="eyebrow" href="../index.html">← 全部日报</a><h1>{html.escape(r['title'])}</h1><div class="meta">{r['date']} · 北京时间 {html.escape(r['generated_at'][11:16])} · 完整日报</div><div class="downloads"><a href="{prefix}.md">Markdown ↓</a><a href="{prefix}.json">JSON ↓</a></div>{toc}<article>{markdown(r['markdown'])}</article></main>'''
+        body=f'''<main class="article">
+<a class="eyebrow" href="../index.html">← 全部日报</a>
+<h1>{html.escape(r['title'])}</h1>
+<div class="meta">{r['date']} · 北京时间 {html.escape(r['generated_at'][11:16])} · 完整日报</div>
+<div class="downloads">
+<a href="{prefix}.md">Markdown ↓</a>
+<a href="{prefix}.json">JSON ↓</a>
+</div>{toc}<article>{markdown(r['markdown'])}</article>
+</main>'''
         (out/'reports'/(r['date']+'.html')).write_text(shell(r['title'],body,base,'../'))
     (out/'data/index.json').write_text(json.dumps({'timezone':'Asia/Shanghai','reports':index},ensure_ascii=False,indent=2)+'\n')
     cards=''.join(f'<a class="report-card" href="reports/{r["date"]}.html"><span class="date">{r["date"]}</span><span><strong>{html.escape(r["title"])}</strong><small>完整正文 · Markdown / JSON</small></span><span class="arrow">↗</span></a>' for r in reports)
     empty='<div class="empty"><h2>等待首份完整日报</h2><p>发布基础设施已准备。收到真实报告后，这里会显示完整正文、历史归档与排名变化。</p></div>'
-    topic_cards=''.join(f'<a class="topic-card" href="topics/{key}.html"><span class="eyebrow">{key.upper()}</span><h2>{title}</h2><p>{desc}</p><span>进入栏目 ↗</span></a>' for key,title,desc in [('finance','金融与市场','A股、港股、美股 · 长期价值 · Top10变动'),('technology','科技与产业','关键技术、产业进展与商业化影响'),('ai-rsi','AI与RSI','模型与Agent · 自进化研究 · 实验启发')])
-    body=f'''<main><section class="hero"><span class="eyebrow">FINANCE / TECHNOLOGY / AI</span><h1>看见变化，形成判断。</h1><p>把金融、科技与AI研究放在同一张图景中。每天一份完整日报，先读总览，再按关注的维度深入。</p><a class="button" href="feed.xml">订阅统一日报 RSS ↗</a></section><div class="stats"><div><strong>{len(reports):03}</strong><span>已归档完整日报</span></div><div><strong>08:00</strong><span>北京时间 · 分析启动时间</span></div><div><strong>1</strong><span>统一日报 / 统一订阅</span></div></div><section class="topic-grid">{topic_cards}</section><section><div class="section-head"><h2>完整日报档案</h2><span>多个维度 / 一份原文</span></div><p class="muted">{'最新报告：'+reports[0]['date'] if reports else '尚无报告；统一任务与发布接入待核验。'} · 完成分析后发布，缺失日期不补造。</p>{cards or empty}</section></main>'''
-    (out/'index.html').write_text(shell('日报档案',body,base))
+    topic_cards=''.join(f'<a class="topic-card" href="topics/{key}.html"><span class="eyebrow">{key.upper()}</span><h2>{title}</h2><p>{desc}</p><span>进入栏目 ↗</span></a>' for key,title,desc in [('finance','金融与投资','A股、港股、美股 · 长期价值 · Top10变动'),('technology','科技与AI','关键技术、模型与Agent、产业进展'),('ai-rsi','前沿动态','日报中的AI与RSI研究线索')])
+    body=f'''<main>
+<section class="hero">
+<span class="eyebrow">FINANCE / TECHNOLOGY / AI</span>
+<h1>看见变化，形成判断。</h1>
+<p>从RSI前沿研究到科技产业，从金融市场到专题思考。用每日简报捕捉变化，用独立文章积累判断。</p>
+<a class="button" href="feed.xml">订阅统一日报 RSS ↗</a>
+</section>
+<div class="stats">
+<div>
+<strong>{len(reports):03}</strong>
+<span>已归档完整日报</span>
+</div>
+<div>
+<strong>08:00</strong>
+<span>北京时间 · 分析启动时间</span>
+</div>
+<div>
+<strong>1</strong>
+<span>统一日报 / 统一订阅</span>
+</div>
+</div>
+<section class="topic-grid">{topic_cards}</section>
+<section>
+<div class="section-head">
+<h2>完整日报档案</h2>
+<span>多个维度 / 一份原文</span>
+</div>
+<p class="muted">{'最新报告：'+reports[0]['date'] if reports else '尚无报告；统一任务与发布接入待核验。'} · 完成分析后发布，缺失日期不补造。</p>{cards or empty}</section>
+</main>'''
+    (out/'daily.html').write_text(shell('每日简报',f'<main><section class="hero compact"><span class="eyebrow">DAILY BRIEF</span><h1>每日简报</h1><p>每天一份完整报告，覆盖金融、科技与前沿研究。</p></section><section>{cards or empty}</section></main>',base))
+    featured='<section><div class="section-head"><h2>研究与笔记</h2><a href="research.html">RSI研究 ↗</a></div><div class="topic-links"><a href="research.html">RSI研究</a><a href="notes.html">专题笔记</a></div>'+ (article_cards(articles[:5]) or '<p class="muted">等待首篇独立文章；不必等到日报发布。</p>')+'</section>'
+    body=body.replace('</main>',featured+'</main>')
+    (out/'index.html').write_text(shell('首页',body,base))
     compare='''<main><section class="hero compact"><span class="eyebrow">RANKING / HISTORY</span><h1>变化，比名次更重要。</h1><p>选择任意两期，比较同一市场与代码的排名。新进、退出与名次移动单独记录。</p></section><section><div class="controls"><label>当前日期<select id="current"></select></label><label>比较日期<select id="previous"></select></label><label>市场<select id="market"><option value="all">全部市场</option><option value="CN">A股</option><option value="HK">港股</option><option value="US">美股</option></select></label></div><p id="status" class="muted" aria-live="polite">正在读取档案…</p><div id="comparison" class="table-scroll"></div></section></main><script src="assets/compare.js" defer></script>'''
     (out/'compare.html').write_text(shell('Top10 历史比较',compare,base))
     (out/'topics').mkdir()
@@ -167,13 +236,17 @@ def build(root, base):
             if part:
                 canonical=f'../reports/{r["date"]}.html'
                 entries.append(f'<section><div class="section-head"><h2>{r["date"]}</h2><a href="{canonical}#{slug}">阅读本期完整日报 ↗</a></div><article>{markdown(part["markdown"],canonical)}</article></section>')
+        category={'finance':'finance','technology':'technology'}.get(slug)
+        standalone=article_cards([a for a in articles if a['category']==category],'../') if category else ''
+        if standalone: entries.insert(0,'<section><h2>独立文章</h2>'+standalone+'</section>')
         content=''.join(entries) or '<div class="empty"><h2>等待本栏目内容</h2><p>这里展示统一日报中的原文栏目，不单独生成第二份报告。</p></div>'
         body=f'<main><section class="hero compact"><span class="eyebrow">DAILY / {slug.upper()}</span><h1>{title}</h1><p>从同一份完整日报进入这个维度，保留当时的事实、判断与来源。</p></section>{content}</main>'
         (out/'topics'/(slug+'.html')).write_text(shell(title,body,base,'../'))
     rss=ET.Element('rss',version='2.0');channel=ET.SubElement(rss,'channel')
     for tag,value in [('title','每日观察 · 金融 / 科技 / AI'),('link',base+'/'),('description','每天08:00启动统一日报，包含今日总览、金融与市场、科技与产业、AI与RSI、风险与行动。'),('language','zh-CN')]: ET.SubElement(channel,tag).text=value
-    for r in reports:
-        item=ET.SubElement(channel,'item');url=f"{base}/reports/{r['date']}.html"
+    feed_entries=[dict(r,url=f"{base}/reports/{r['date']}.html") for r in reports]+[dict(a,url=f"{base}/articles/{a['slug']}.html") for a in articles]
+    for r in sorted(feed_entries,key=lambda x:x['generated_at'],reverse=True):
+        item=ET.SubElement(channel,'item');url=r['url']
         for tag,value in [('title',r['title']),('link',url),('guid',url),('pubDate',format_datetime(datetime.fromisoformat(r['generated_at']))),('description','<pre style="white-space:pre-wrap">'+html.escape(r['markdown'])+'</pre>')]: ET.SubElement(item,tag).text=value
     ET.indent(rss);ET.ElementTree(rss).write(out/'feed.xml',encoding='utf-8',xml_declaration=True)
     (out/'.nojekyll').touch()
@@ -184,9 +257,12 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('action',choices=['build','ingest-event']);parser.add_argument('--base-url',default=os.environ.get('SITE_URL','https://aprilvkuo.github.io/investment-report'));args=parser.parse_args()
     if args.action=='ingest-event':
         event=json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
-        if event.get('client_payload',{}).get('validation_only') is True:
-            validate(event['client_payload']['report']);print('Validation only; no archive written');return
-        print('Archive changed:',ingest(ROOT,event.get('client_payload',{}).get('report')))
+        payload=event.get('client_payload',{})
+        article=event.get('action')=='publish-article'
+        record=payload.get('article' if article else 'report')
+        if payload.get('validation_only') is True:
+            (validate_article if article else validate)(record);print('Validation only; no archive written');return
+        print('Archive changed:',ingest_article(ROOT,record) if article else ingest(ROOT,record))
     else: print('Reports built:',build(ROOT,args.base_url))
 
 if __name__=='__main__': main()

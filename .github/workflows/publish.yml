@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   repository_dispatch:
-    types: [publish-report]
+    types: [publish-report, publish-article]
   workflow_dispatch:
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
       - name: Commit archive only when new
         if: github.event_name == 'repository_dispatch'
         run: |
-          git add reports/
+          git add reports/ articles/
           if ! git diff --cached --quiet; then
             git config user.name github-actions[bot]
             git config user.email 41898282+github-actions[bot]@users.noreply.github.com

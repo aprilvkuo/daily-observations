@@ -83,3 +83,41 @@ DNS 提供商 Cloudflare：为 `invest` 添加 CNAME → `aprilvkuo.github.io`�
 同一事件只在主要栏目完整说明，其他栏目引用其锚点。金融Top10仍存顶层top10数组，按market+symbol做历史比较；没有榜单则留空。不把栏目拆成独立日报或多个RSS条目。旧版无栏目标题的完整日报仍保留原文和订阅，栏目页不臆测归类。
 
 栏目网址：`topics/finance.html`、`topics/technology.html`、`topics/ai-rsi.html`。完整报告内也有栏目导航。仓库、域名与发布场景复用，不新建站点或分析任务。
+
+## 发布独立文章
+
+RSI研究、科技与AI、金融与投资、专题笔记可以随时单独发布，不必包含金融Top10，也不依赖当天日报。
+
+先在仓库之外准备完整Markdown正文，然后运行（替换成真实文件、标题和slug）：
+
+```sh
+python3 scripts/content.py --markdown /absolute/path/research.md --title '你的研究标题' --slug your-research-title --category rsi --summary '一句话介绍'
+python3 -m unittest discover -s tests -v
+python3 scripts/pipeline.py build
+git add articles/
+git commit -m 'Publish research note'
+git push
+```
+
+分类可选 `rsi`、`technology`、`finance`、`notes`。工具自动生成 `articles/slug.md` 和 `articles/slug.json`，避免手工维护两份正文。修改已有文章需显式添加 `--replace`，审阅差异后提交，Git保留历史。原稿无日期时使用当前北京时间，也可指定 `--date YYYY-MM-DD`。
+
+文章更新沿用同一RSS guid；是否提示修订取决于订阅器。网站更新由每次push自动触发，不需要手动上传生成的HTML。统一feed.xml同时包含日报和独立文章。
+
+也支持通过现有Make发布入口发送：
+
+```json
+{"event_type":"publish-article","client_payload":{"article":{"schema_version":1,"slug":"your-research-title","category":"rsi","date":"2026-10-25","generated_at":"2026-10-25T12:00:00+08:00","title":"你的研究标题","summary":"一句话介绍","markdown":"完整文章正文","source":{"producer":"author"}}}}
+```
+
+Make场景8162821接收上述完整JSON文本作为dispatch_json。仅验证时设置client_payload.validation_only=true，不写入公开档案。按需文章发布不创建任何定时分析任务。
+
+## 站点结构与域名
+
+- 每日简报：`daily.html`
+- RSI研究：`research.html`，并链接日报中的AI/RSI动态
+- 科技与AI：`topics/technology.html`
+- 金融与投资：`topics/finance.html`，保留Top10历史入口
+- 专题笔记：`notes.html`
+- 独立文章：`articles/slug.html`
+
+站名“每日观察”覆盖多种主题。新目标域名为 `brief.egguo.com`，取代尚未配置的invest.egguo.com；以实际DNS、Pages域名配置与HTTPS核验结果为准。仓库仍复用investment-report，不会影响已有blog或stock_agent。
