@@ -1,0 +1,49 @@
+# 发布状态与继续接入
+
+核查日期：2026-10-25（Asia/Shanghai）。
+
+## 已验证
+
+- 独立公开仓库：https://github.com/aprilvkuo/investment-report
+- 网站：https://aprilvkuo.github.io/investment-report/ ，首页和feed.xml均HTTP 200。
+- 首次Pages部署运行40155683163成功。
+- Make发布场景8162821已启用，按需触发，无分析、无定时器、无飞书/邮件消息模块。
+- 场景：https://eu1.make.com/2991244/scenarios/8162821
+- GitHub OAuth连接已由用户授权；连接健康状态ok。
+- Make执行09a73e0a087349e297ae3e7bdc9aec06成功；GitHub API返回204。
+- 对应GitHub repository_dispatch运行40155890246成功，日志明确Validation only; no archive written，Reports built: 0。无测试日报公开发布。
+- 修复后推送运行40156022614成功。
+- 六项本地测试通过；独立审查提出的并发排队丢失和缺榜单误报退出均已修复。
+
+## 原有Make场景
+
+Send Daily Brief to Feishu（7689324）启用、按需运行，最近运行成功。它没有08:00定时器，2026-10-25输入为“每日重点简报”，不能当成三市场完整日报。未改动、未触发此消息场景。
+
+## 待登录后完成
+
+- 原ChatGPT每天08:00三市场任务的身份、完整指令、时区、插件执行能力和完整输出尚未核验。任务页面读取失败，应用内浏览器转登录页。没有创建替代分析任务。
+- Cloudflare当前为登录页。用户已同意新增invest CNAME，但DNS尚未写入。
+- Pages自定义域名和HTTPS证书尚未配置，保留可用临时网址。
+- 尚无真实完整日报，历史及RSS为空。
+
+## 域名操作
+
+1. Cloudflare → egguo.com → DNS，仅新增CNAME invest → aprilvkuo.github.io，DNS only，TTL Auto。
+2. 核验公共DNS后，将仓库Pages自定义域名设为invest.egguo.com，等待证书就绪并开启Enforce HTTPS。
+3. 仓库变量SITE_URL设为https://invest.egguo.com，手动运行发布工作流。核验首页、feed.xml、Top10页及HTTPS。
+
+## 追加到原任务的发布步骤
+
+保留原分析范围、08:00（Asia/Shanghai）时间和单次分析流程。完成完整报告后，使用完全相同的Markdown正文与原报告明确给出的总Top10，包装为README中的report对象。不缩写、不截断，不补造未知榜单。原报告无结构化Top10则传空数组。
+
+调用Make私人空间场景“Publish Three-Market Daily Report to GitHub Pages”（8162821）一次。输入dispatch_json为完整JSON文本：
+
+```json
+{"event_type":"publish-report","client_payload":{"report":{"说明":"替换为README定义的完整report对象"}}}
+```
+
+正式发布不包含validation_only。GitHub accepted仅代表受理；须核验Actions归档与部署完成，否则明确说明待验证。不要为发布另作分析，不额外调用飞书或邮件场景，不重复发送摘要。失败时保留原文、说明错误，不以摘要代替正文。若原任务不能调用Make插件，不声称自动接通。
+
+## 限制
+
+GitHub dispatch存在payload大小上限，超限失败并保留完整原文，不截断。公开档案仅接收可公开研究报告，不能含账户信息、持仓数量、密钥或私人Webhook地址。本仓库无模型API调用或新增分析定时任务；Make实际操作消耗以执行记录为准。
