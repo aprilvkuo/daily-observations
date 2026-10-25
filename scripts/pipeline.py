@@ -103,13 +103,14 @@ def build(root, base):
     index=[]
     for i,r in enumerate(reports):
         prior=reports[i+1] if i+1<len(reports) else None
-        old={(x['market'],x['symbol'].upper()):x for x in prior['top10']} if prior else {}
+        comparable=bool(prior and prior['top10'] and r['top10'])
+        old={(x['market'],x['symbol'].upper()):x for x in prior['top10']} if comparable else {}
         ranked=[]
         for item in sorted(r['top10'],key=lambda x:x['rank']):
             prev=old.get((item['market'],item['symbol'].upper()))
-            ranked.append(dict(item,previous_rank=prev['rank'] if prev else None,rank_change=prev['rank']-item['rank'] if prev else None,status='continued' if prev else ('new' if prior and prior['top10'] else 'no_baseline')))
+            ranked.append(dict(item,previous_rank=prev['rank'] if prev else None,rank_change=prev['rank']-item['rank'] if prev else None,status='continued' if prev else ('new' if comparable else 'no_baseline')))
         exited=[x for k,x in old.items() if k not in {(y['market'],y['symbol'].upper()) for y in r['top10']}]
-        index.append(dict(date=r['date'],title=r['title'],generated_at=r['generated_at'],top10=ranked,exited=exited,previous_date=prior['date'] if prior else None))
+        index.append(dict(comparison_available=comparable,date=r['date'],title=r['title'],generated_at=r['generated_at'],top10=ranked,exited=exited,previous_date=prior['date'] if prior else None))
         dest=out/'reports'/r['date'][:4]/r['date'][5:7];dest.mkdir(parents=True,exist_ok=True)
         raw=root/'reports'/r['date'][:4]/r['date'][5:7]/(r['date']+'.json')
         shutil.copy(raw,dest/raw.name);shutil.copy(raw.with_suffix('.md'),dest/raw.with_suffix('.md').name)

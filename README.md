@@ -10,7 +10,7 @@
 
 ## 发布输入
 
-Make on-demand 场景接收 `report_json`（完整 JSON 文本，不加代码围栏）。以下为结构说明，勿把示例当真实报告发布：
+Make on-demand 场景接收 `dispatch_json`（完整 GitHub dispatch JSON 文本，不加代码围栏）；其中 client_payload.report 的结构如下。以下为结构说明，勿把示例当真实报告发布：
 
 ```json
 {
@@ -58,4 +58,4 @@ DNS 提供商 Cloudflare：为 `invest` 添加 CNAME → `aprilvkuo.github.io`�
 
 ## 接入现有 ChatGPT 08:00 任务
 
-先确认正确任务的名称、时区、内容及最近输出。保留既有分析主体、08:00 时刻和运行环境。仅在报告完成后追加：把相同完整正文与原报告Top10包装为上述 JSON，调用 Make 发布场景一次。不要调用飞书发送场景，不要新建分析任务，不要重复发送摘要。上游若没有 Make 插件执行能力，应明确记录未接通，不能仅靠写入提示词声称完成。
+先确认正确任务的名称、时区、内容及最近输出。保留既有分析主体、08:00 时刻和运行环境。仅在报告完成后追加：把相同完整正文与原报告Top10包装为上述 JSON，调用 Make 场景 8162821「Publish Three-Market Daily Report to GitHub Pages」一次，输入 dispatch_json 为包含 event_type 与 client_payload.report 的完整JSON文本。不要调用飞书发送场景，不要新建分析任务，不要重复发送摘要。上游若没有 Make 插件执行能力，应明确记录未接通，不能仅靠写入提示词声称完成。

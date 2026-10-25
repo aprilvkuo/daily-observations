@@ -57,6 +57,18 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(data['reports'][0]['previous_date'],'2026-10-24')
             self.assertTrue((out/'reports/2026/10/2026-10-25.json').exists())
 
+    def test_missing_top10_does_not_imply_entries_or_exits(self):
+        for old_missing,new_missing in [(False,True),(True,False),(True,True)]:
+            with self.subTest(old_missing=old_missing,new_missing=new_missing),tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp);old=report('2026-10-24');new=report()
+                if old_missing: old['top10']=[]
+                if new_missing: new['top10']=[]
+                pipeline.ingest(root,old);pipeline.ingest(root,new);pipeline.build(root,'https://example.org')
+                row=json.loads((root/'dist/data/index.json').read_text())['reports'][0]
+                self.assertFalse(row['comparison_available'])
+                self.assertEqual(row['exited'],[])
+                for entry in row['top10']: self.assertEqual(entry['status'],'no_baseline')
+
     def test_empty_site_has_no_fake_reports(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);pipeline.build(root,'https://example.org')

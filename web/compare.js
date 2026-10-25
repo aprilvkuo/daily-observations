@@ -10,6 +10,7 @@
     const render=()=>{
       const a=reports.find(r=>r.date===current.value),b=reports.find(r=>r.date===previous.value),old=new Map(b.top10.map(x=>[x.market+':'+x.symbol.toUpperCase(),x]));
       container.replaceChildren();
+      if(!a.top10.length||!b.top10.length){status.textContent=`${a.date} 对比 ${b.date} · 至少一期未提供结构化Top10，无法判断新进、退出或排名变化。`;return;}
       const rows=a.top10.filter(x=>market.value==='all'||x.market===market.value);
       const table=add('table','',container),head=add('tr','',add('thead','',table));
       ['市场 / 代码','公司','当前排名','比较排名','变化'].forEach(t=>add('th',t,head));
