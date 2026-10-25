@@ -19,6 +19,14 @@ except ModuleNotFoundError:
 ROOT = Path(__file__).resolve().parents[1]
 TOPICS = {'overview':'今日总览','finance':'金融与市场','technology':'科技与产业','ai-rsi':'AI与RSI','actions':'风险与行动'}
 
+def topic_id(title):
+    title=re.sub(r'\s+', '', title.replace('**','').strip().rstrip('#').strip())
+    title=re.sub(r'^(?:[一二三四五六七八九十]+|[0-9]+)[、.．：:]', '', title)
+    aliases={'今日总览':'overview','金融与市场':'finance','金融与投资':'finance',
+             '科技与产业':'technology','科技与AI':'technology','AI与RSI':'ai-rsi',
+             'AI/RSI':'ai-rsi','AI／RSI':'ai-rsi','RSI研究':'ai-rsi','风险与行动':'actions'}
+    return aliases.get(title)
+
 def markdown_lines(body):
     fence=None
     for line in body.splitlines(keepends=True):
@@ -34,12 +42,12 @@ def markdown_lines(body):
             else: yield line,False,None
 
 def sections(body):
-    """Extract exact canonical sections; do not classify or rewrite prose."""
+    """Extract known heading variants without rewriting the archived prose."""
     found=[]; current=None; lines=[]
     for line,fenced,marker in markdown_lines(body):
         match=None if fenced else re.fullmatch(r'## ([^\r\n]+)\r?\n?',line)
-        slug=next((key for key,title in TOPICS.items() if match and match[1]==title),None)
-        if slug:
+        slug=topic_id(match[1]) if match else None
+        if match:
             if current: found.append({'id':current,'title':TOPICS[current],'markdown':''.join(lines)})
             current=slug;lines=[]
         elif current: lines.append(line)
@@ -113,7 +121,7 @@ def markdown(body,fragment_base=''):
         if table: result.append('</tbody></table></div>');table=False
         heading=re.match(r'^(#{1,6})\s+(.+)$',line)
         if heading:
-            anchor=next((key for key,title in TOPICS.items() if len(heading[1])==2 and heading[2]==title),None)
+            anchor=topic_id(heading[2]) if len(heading[1])==2 else None
             attr=f' id="{anchor}"' if anchor else ''
             n=min(len(heading[1])+1,6);result.append(f'<h{n}{attr}>{inline(heading[2],fragment_base)}</h{n}>')
         elif line.strip(): result.append('<p>'+inline(line,fragment_base)+'</p>')
@@ -137,10 +145,11 @@ def shell(title,body,base,relative=''):
 </a>
 <nav>
 <a href="{relative}daily.html">每日简报</a>
-<a href="{relative}research.html">RSI研究</a>
-<a href="{relative}topics/technology.html">科技与AI</a>
-<a href="{relative}topics/finance.html">金融与投资</a>
-<a href="{relative}notes.html">专题笔记</a>
+<a href="{relative}topics/overview.html">今日总览</a>
+<a href="{relative}topics/finance.html">金融与市场</a>
+<a href="{relative}topics/technology.html">科技与产业</a>
+<a href="{relative}topics/ai-rsi.html">AI与RSI</a>
+<a href="{relative}topics/actions.html">风险与行动</a>
 <a href="{relative}compare.html">Top10</a>
 <a href="{relative}feed.xml">RSS ↗</a>
 </nav>
@@ -192,7 +201,10 @@ def build(root, base):
     (out/'data/index.json').write_text(json.dumps({'timezone':'Asia/Shanghai','reports':index},ensure_ascii=False,indent=2)+'\n')
     cards=''.join(f'<a class="report-card" href="reports/{r["date"]}.html"><span class="date">{r["date"]}</span><span><strong>{html.escape(r["title"])}</strong><small>完整正文 · Markdown / JSON</small></span><span class="arrow">↗</span></a>' for r in reports)
     empty='<div class="empty"><h2>等待首份完整日报</h2><p>发布基础设施已准备。收到真实报告后，这里会显示完整正文、历史归档与排名变化。</p></div>'
-    topic_cards=''.join(f'<a class="topic-card" href="{url}"><span class="eyebrow">{key}</span><h2>{title}</h2><p>{desc}</p><span>进入栏目 ↗</span></a>' for key,title,desc,url in [('DAILY','每日简报','每天一份综合观察，连接各个关注方向','daily.html'),('RESEARCH','RSI研究','自进化前沿、论文精读与研究笔记','research.html'),('TECHNOLOGY','科技与AI','关键技术、模型与Agent、产业进展','topics/technology.html'),('FINANCE','金融与投资','三市场长期价值、估值与Top10变动','topics/finance.html'),('NOTES','专题笔记','随时积累问题、证据与独立思考','notes.html')])
+    topic_cards=''.join(
+        f'<a class="topic-card" href="topics/{slug}.html"><span class="eyebrow">{slug.upper()}</span>'
+        f'<h2>{title}</h2><p>{sum(bool(p["markdown"].strip()) for r in reports for p in sections(r["markdown"]) if p["id"]==slug)} 期日报 · {desc}</p><span>阅读栏目 ↗</span></a>'
+        for slug,title,desc in [(key,title,{'overview':'当天重点与核心判断','finance':'三市场估值与榜单','technology':'技术、工具与产业变化','ai-rsi':'AI与自进化研究前沿','actions':'风险、待核实事项与下一步'}[key]) for key,title in TOPICS.items()])
     body=f'''<main>
 <section class="hero">
 <span class="eyebrow">FINANCE / TECHNOLOGY / AI</span>
@@ -223,25 +235,29 @@ def build(root, base):
 <p class="muted">{'最新报告：'+reports[0]['date'] if reports else '尚无报告；统一任务与发布接入待核验。'} · 完成分析后发布，缺失日期不补造。</p>{cards or empty}</section>
 </main>'''
     (out/'daily.html').write_text(shell('每日简报',f'<main><section class="hero compact"><span class="eyebrow">DAILY BRIEF</span><h1>每日简报</h1><p>每天一份完整报告，覆盖金融、科技与前沿研究。</p></section><section>{cards or empty}</section></main>',base))
-    featured='<section><div class="section-head"><h2>研究与笔记</h2><a href="research.html">RSI研究 ↗</a></div><div class="topic-links"><a href="research.html">RSI研究</a><a href="notes.html">专题笔记</a></div>'+ (article_cards(articles[:5]) or '<p class="muted">等待首篇独立文章；不必等到日报发布。</p>')+'</section>'
+    featured=('<section><div class="section-head"><h2>独立文章与专题笔记</h2></div>'+article_cards(articles[:5])+'</section>') if articles else ''
     body=body.replace('</main>',featured+'</main>')
     (out/'index.html').write_text(shell('首页',body,base))
-    compare='''<main><section class="hero compact"><span class="eyebrow">RANKING / HISTORY</span><h1>变化，比名次更重要。</h1><p>选择任意两期，比较同一市场与代码的排名。新进、退出与名次移动单独记录。</p></section><section><div class="controls"><label>当前日期<select id="current"></select></label><label>比较日期<select id="previous"></select></label><label>市场<select id="market"><option value="all">全部市场</option><option value="CN">A股</option><option value="HK">港股</option><option value="US">美股</option></select></label></div><p id="status" class="muted" aria-live="polite">正在读取档案…</p><div id="comparison" class="table-scroll"></div></section></main><script src="assets/compare.js" defer></script>'''
+    compare='''<main><section class="hero compact"><span class="eyebrow">RANKING / HISTORY</span><h1>变化，比名次更重要。</h1><p>查看当期榜单；累积两期后可比较同一市场与代码的排名，新进、退出与名次移动单独记录。</p></section><section><div class="controls"><label>当前日期<select id="current"></select></label><label>比较日期<select id="previous"></select></label><label>市场<select id="market"><option value="all">全部市场</option><option value="CN">A股</option><option value="HK">港股</option><option value="US">美股</option></select></label></div><p id="status" class="muted" aria-live="polite">正在读取档案…</p><div id="comparison" class="table-scroll"></div></section></main><script src="assets/compare.js" defer></script>'''
     (out/'compare.html').write_text(shell('Top10 历史比较',compare,base))
     (out/'topics').mkdir()
     for slug,title in TOPICS.items():
-        entries=[]
-        for r in reports:
-            part=next((p for p in sections(r['markdown']) if p['id']==slug),None)
-            if part:
-                canonical=f'../reports/{r["date"]}.html'
-                entries.append(f'<section><div class="section-head"><h2>{r["date"]}</h2><a href="{canonical}#{slug}">阅读本期完整日报 ↗</a></div><article>{markdown(part["markdown"],canonical)}</article></section>')
-        category={'finance':'finance','technology':'technology'}.get(slug)
-        standalone=article_cards([a for a in articles if a['category']==category],'../') if category else ''
-        if standalone: entries.insert(0,'<section><h2>独立文章</h2>'+standalone+'</section>')
-        content=''.join(entries) or '<div class="empty"><h2>等待本栏目内容</h2><p>这里展示统一日报中的原文栏目，不单独生成第二份报告。</p></div>'
-        body=f'<main><section class="hero compact"><span class="eyebrow">DAILY / {slug.upper()}</span><h1>{title}</h1><p>从同一份完整日报进入这个维度，保留当时的事实、判断与来源。</p></section>{content}</main>'
-        (out/'topics'/(slug+'.html')).write_text(shell(title,body,base,'../'))
+        routes=[(out/'topics'/(slug+'.html'),'../')]
+        if slug=='ai-rsi': routes.append((out/'research.html',''))
+        if slug=='actions': routes.append((out/'notes.html',''))
+        for route,relative in routes:
+            entries=[]
+            for r in reports:
+                part=next((p for p in sections(r['markdown']) if p['id']==slug and p['markdown'].strip()),None)
+                if part:
+                    canonical=f'{relative}reports/{r["date"]}.html'
+                    entries.append(f'<section><div class="section-head"><h2>{r["date"]}</h2><a href="{canonical}#{slug}">阅读本期完整日报 ↗</a></div><article>{markdown(part["markdown"],canonical)}</article></section>')
+            category={'finance':'finance','technology':'technology','ai-rsi':'rsi','actions':'notes'}.get(slug)
+            standalone=article_cards([a for a in articles if a['category']==category],relative) if category else ''
+            if standalone: entries.append('<section><h2>独立文章与专题笔记</h2>'+standalone+'</section>')
+            content=''.join(entries) or f'<div class="empty"><h2>本栏目尚无内容</h2><p>日报提供此栏目后会自动归档。</p><a href="{relative}daily.html">阅读已有完整日报 ↗</a></div>'
+            body=f'<main><section class="hero compact"><span class="eyebrow">DAILY / {slug.upper()}</span><h1>{title}</h1><p>来自统一日报的原文栏目，随每日发布自动更新。独立文章与专题笔记在有内容时一并展示。</p></section>{content}</main>'
+            route.write_text(shell(title,body,base,relative))
     rss=ET.Element('rss',version='2.0');channel=ET.SubElement(rss,'channel')
     for tag,value in [('title','每日观察 · 金融 / 科技 / AI'),('link',base+'/'),('description','每天08:00启动统一日报，包含今日总览、金融与市场、科技与产业、AI与RSI、风险与行动。'),('language','zh-CN')]: ET.SubElement(channel,tag).text=value
     feed_entries=[dict(r,url=f"{base}/reports/{r['date']}.html") for r in reports]+[dict(a,url=f"{base}/articles/{a['slug']}.html") for a in articles]

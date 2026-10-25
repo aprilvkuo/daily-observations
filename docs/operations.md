@@ -60,3 +60,14 @@ GitHub dispatch存在payload大小上限，超限失败并保留完整原文，�
 ## 个人综合站扩展
 
 用户接受“每日观察 / brief.egguo.com”与每日简报、RSI研究、科技与AI、金融与投资、专题笔记结构。增加独立文章Markdown/JSON归档、分类页、统一RSS与publish-article事件。定时任务合并继续暂缓。旧invest域名从未实际配置，不需删除其DNS。
+
+## 日报与网站栏目适配
+
+正式站点：https://brief.egguo.com/ ，订阅：https://brief.egguo.com/feed.xml 。
+日报中的五个二级标题依次是：今日总览、金融与市场、科技与产业、AI与RSI、风险与行动。
+网站从同一份 Markdown 自动提取这五个维度；首页、导航、栏目页面名称一致。
+`research.html` 兼容原入口，直接显示 AI与RSI 日报和已有 RSI 独立文章；
+`notes.html` 兼容原入口，显示风险与行动及已有专题笔记。独立文章不是日报栏目展示的前置条件。
+标题可含常见编号、加粗和空格，但生产任务仍建议保持标准标题；代码块中的标题不会分类。
+仅有一期 Top10 时显示当期榜单；两期以上才有历史比较依据。
+原始 JSON/Markdown 及 RSS 不复制、不拆分，历史内容修订仍需显式审阅提交。

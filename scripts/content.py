@@ -54,11 +54,6 @@ def build_articles(root,out,base,shell,markdown):
         body=f'<main class="article"><a class="eyebrow" href="../index.html">← 每日观察 / {category}</a><h1>{html.escape(a["title"])}</h1><div class="meta">{a["date"]} · {category} · 独立文章</div><div class="downloads"><a href="{slug}.md">Markdown ↓</a><a href="{slug}.json">JSON ↓</a></div><article>{markdown(a["markdown"])}</article></main>'
         (out/'articles'/(slug+'.html')).write_text(shell(a['title'],body,base,'../'))
         for ext in ('md','json'):shutil.copy(root/'articles'/(slug+'.'+ext),out/'articles'/(slug+'.'+ext))
-    for category,path in [('rsi','research.html'),('notes','notes.html')]:
-        title=CATEGORIES[category];cards=article_cards([a for a in articles if a['category']==category])
-        extra='<p class="muted"><a href="topics/ai-rsi.html">查看每日日报中的 AI／RSI 动态 ↗</a></p>' if category=='rsi' else ''
-        body=f'<main><section class="hero compact"><span class="eyebrow">RESEARCH / NOTES</span><h1>{title}</h1><p>独立于每日简报，积累值得持续回看的问题、证据与思考。</p>{extra}</section><section>{cards or "<div class=empty>尚无独立文章，发布后自动归档。</div>"}</section></main>'
-        (out/path).write_text(shell(title,body,base))
     (out/'data/articles.json').write_text(json.dumps([{k:v for k,v in a.items() if k!='markdown'} for a in articles],ensure_ascii=False,indent=2)+'\n')
     return articles
 

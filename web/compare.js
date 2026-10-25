@@ -7,9 +7,19 @@
     if(!reports.length){status.textContent='尚无完整日报，收到真实报告后显示比较。';return;}
     for(const r of reports){for(const select of [current,previous]){const option=add('option',r.date,select);option.value=r.date;}}
     previous.value=reports[1]?.date||reports[0].date;
+    previous.disabled=reports.length===1;
     const render=()=>{
       const a=reports.find(r=>r.date===current.value),b=reports.find(r=>r.date===previous.value),old=new Map(b.top10.map(x=>[x.market+':'+x.symbol.toUpperCase(),x]));
       container.replaceChildren();
+      if(a.date===b.date){
+        const rows=a.top10.filter(x=>market.value==='all'||x.market===market.value);
+        const table=add('table','',container),head=add('tr','',add('thead','',table));
+        ['市场 / 代码','公司','当期排名'].forEach(t=>add('th',t,head));
+        const tbody=add('tbody','',table);
+        for(const item of rows){const row=add('tr','',tbody);[item.market+' / '+item.symbol,item.name,item.rank].forEach(t=>add('td',String(t),row));}
+        status.textContent=`${a.date} · ${reports.length===1?'仅有一期，下一期发布后可比较历史变化。':'选择了同一期，展示当期榜单。'}${!a.top10.length?' 本期未提供结构化Top10。':!rows.length?' 当前筛选无标的。':''}`;
+        return;
+      }
       if(!a.top10.length||!b.top10.length){status.textContent=`${a.date} 对比 ${b.date} · 至少一期未提供结构化Top10，无法判断新进、退出或排名变化。`;return;}
       const rows=a.top10.filter(x=>market.value==='all'||x.market===market.value);
       const table=add('table','',container),head=add('tr','',add('thead','',table));
