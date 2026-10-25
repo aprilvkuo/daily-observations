@@ -69,6 +69,38 @@ class PipelineTests(unittest.TestCase):
                 self.assertEqual(row['exited'],[])
                 for entry in row['top10']: self.assertEqual(entry['status'],'no_baseline')
 
+    def test_unified_sections_share_one_canonical_report_and_rss_item(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);r=report()
+            r['markdown']='# 每日观察日报\n\n## 今日总览\n今日概述\n\n## 金融与市场\n金融正文\n\n## 科技与产业\n科技正文\n\n## AI与RSI\n研究正文\n\n## 风险与行动\n行动正文'
+            pipeline.ingest(root,r);pipeline.build(root,'https://example.org')
+            self.assertEqual((root/'reports/2026/10/2026-10-25.md').read_text(),r['markdown'])
+            self.assertEqual(len(ET.parse(root/'dist/feed.xml').findall('./channel/item')),1)
+            for slug,text in [('finance','金融正文'),('technology','科技正文'),('ai-rsi','研究正文')]:
+                page=(root/'dist/topics'/f'{slug}.html').read_text()
+                self.assertIn(text,page)
+                self.assertIn(f'../reports/2026-10-25.html#{slug}',page)
+            self.assertIn('每日观察',(root/'dist/index.html').read_text())
+            data=json.loads((root/'dist/data/index.json').read_text())
+            self.assertEqual(len(data['reports'][0]['sections']),5)
+
+    def test_code_fences_do_not_create_false_topics(self):
+        cases=[('~~~markdown','~~~'),('   ```python','   ```'),('````markdown','````')]
+        for start,end in cases:
+            with self.subTest(start=start):
+                body='## 金融与市场\n金融\n'+start+'\n```\n## AI与RSI\n示例\n```\n'+end+'\n仍属金融\n## 科技与产业\n技术'
+                parts=pipeline.sections(body)
+                self.assertEqual([p['id'] for p in parts],['finance','technology'])
+                self.assertIn('仍属金融',parts[0]['markdown'])
+
+    def test_section_links_resolve_from_canonical_and_topic_pages(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);r=report();r['markdown']='## 金融与市场\n[查看AI栏目](#ai-rsi)\n## AI与RSI\n研究'
+            pipeline.ingest(root,r);pipeline.build(root,'https://example.org')
+            self.assertIn('href="#ai-rsi"',(root/'dist/reports/2026-10-25.html').read_text())
+            self.assertIn('href="../reports/2026-10-25.html#ai-rsi"',(root/'dist/topics/finance.html').read_text())
+            self.assertNotIn('href="javascript:',pipeline.markdown('[危险](javascript:alert)'))
+
     def test_empty_site_has_no_fake_reports(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);pipeline.build(root,'https://example.org')

@@ -1,10 +1,10 @@
-# 三市场长期价值监控
+# 每日观察：金融 / 科技 / AI
 
-每日08:00（Asia/Shanghai）启动的既有分析任务是唯一内容生产者。这里负责发布，不运行任何模型、不新增分析定时器，也不发送飞书/邮件消息。分析完成后，完整日报进入 Make → GitHub → GitHub Pages → RSS。
+目标是将两个既有08:00任务合并为一个“每日观察日报”（任务合并尚未执行）。这里负责发布，不运行任何模型、不新增分析定时器，也不发送飞书/邮件消息。分析完成后，完整日报进入 Make → GitHub → GitHub Pages → RSS。
 
 - 临时地址：https://aprilvkuo.github.io/investment-report/
 - 目标域名：https://invest.egguo.com/ （DNS/HTTPS 验证通过后启用）
-- 完整订阅：站点下 `feed.xml`
+- 统一完整订阅：站点下 `feed.xml`，每期只有一个条目，含所有栏目
 - 历史：`reports/YYYY/MM/YYYY-MM-DD.{md,json}`，同时生成网页版
 - Top10：两期任意比较，按 market + symbol 匹配；未知数据不填充、不推测
 
@@ -19,7 +19,7 @@ Make on-demand 场景接收 `dispatch_json`（完整 GitHub dispatch JSON 文本
   "timezone": "Asia/Shanghai",
   "generated_at": "2026-10-25T08:30:00+08:00",
   "report_type": "full_daily",
-  "title": "三市场长期价值监控｜2026-10-25",
+  "title": "每日观察日报｜2026-10-25",
   "markdown": "完整原始报告正文，不能是摘要、链接或截断片段",
   "top10": [],
   "source": {"producer": "existing-chatgpt-0800-monitor"}
@@ -59,3 +59,27 @@ DNS 提供商 Cloudflare：为 `invest` 添加 CNAME → `aprilvkuo.github.io`�
 ## 接入现有 ChatGPT 08:00 任务
 
 先确认正确任务的名称、时区、内容及最近输出。保留既有分析主体、08:00 时刻和运行环境。仅在报告完成后追加：把相同完整正文与原报告Top10包装为上述 JSON，调用 Make 场景 8162821「Publish Three-Market Daily Report to GitHub Pages」一次，输入 dispatch_json 为包含 event_type 与 client_payload.report 的完整JSON文本。不要调用飞书发送场景，不要新建分析任务，不要重复发送摘要。上游若没有 Make 插件执行能力，应明确记录未接通，不能仅靠写入提示词声称完成。
+
+
+## 统一栏目约定
+
+一份完整Markdown为唯一原文。请使用下面五个精确的二级标题，站点将直接抽取其原文段落建立栏目视图，不再次分析或改写：
+
+```markdown
+# 每日观察日报｜YYYY-MM-DD
+## 今日总览
+## 金融与市场
+## 科技与产业
+## AI与RSI
+## 风险与行动
+```
+
+- 今日总览：当天最重要的3–5项变化和跨领域影响；关联正文以链接指向，不重复叙述整条新闻。
+- 金融与市场：保留原三市场监控深度，A/H/美股长期价值、正常化盈利、估值、安全边际、Top10及变动；休市注明数据交易日。
+- 科技与产业：保留重点简报中的关键新闻、进展、商业化意义和原始来源。
+- AI与RSI：模型、Agent、自进化论文与实验启发，明确作者报告与独立验证边界。
+- 风险与行动：跨栏目风险与待验证事项；无重要变化时明确说明，不填充虚构内容。
+
+同一事件只在主要栏目完整说明，其他栏目引用其锚点。金融Top10仍存顶层top10数组，按market+symbol做历史比较；没有榜单则留空。不把栏目拆成独立日报或多个RSS条目。旧版无栏目标题的完整日报仍保留原文和订阅，栏目页不臆测归类。
+
+栏目网址：`topics/finance.html`、`topics/technology.html`、`topics/ai-rsi.html`。完整报告内也有栏目导航。仓库、域名与发布场景复用，不新建站点或分析任务。
