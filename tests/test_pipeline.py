@@ -88,7 +88,8 @@ class PipelineTests(unittest.TestCase):
         cases=[('~~~markdown','~~~'),('   ```python','   ```'),('````markdown','````')]
         for start,end in cases:
             with self.subTest(start=start):
-                body='## 金融与市场\n金融\n'+start+'\n```\n## AI与RSI\n示例\n```\n'+end+'\n仍属金融\n## 科技与产业\n技术'
+                inner='```\n' if start.strip().startswith(('~~~~','````','~~~')) else ''
+                body='## 金融与市场\n金融\n'+start+'\n'+inner+'## AI与RSI\n示例\n'+inner+end+'\n仍属金融\n## 科技与产业\n技术'
                 parts=pipeline.sections(body)
                 self.assertEqual([p['id'] for p in parts],['finance','technology'])
                 self.assertIn('仍属金融',parts[0]['markdown'])
