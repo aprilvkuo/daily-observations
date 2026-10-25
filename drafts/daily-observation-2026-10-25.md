@@ -76,3 +76,82 @@ Anthropic 10月19日发布GRAFT，把检测到的reward-hacking更新限制在�
 | 10 | Berkshire BRK.B | $542.19 | A | 正常化经营利润待核 | 450/580/670 | 6.5% | L2；🟡🟢🟡；等待 | 承保、现金配置、回购 |
 
 Uber Q2 FCF为27.92亿美元，但GAAP净利润含约16亿美元投资重估收益，需剔除后评估。Intuit FY27指引收入增长9–10%，Non-GAAP口径开始计入SBC。AXP Q3调整后EPS同比+13%，不能把含一次性投资出售收益的GAAP EPS直接年化。
+
+### 跨市场总榜 Top10
+
+| # | 股票/代码 | 市场 | 收盘价 | 基本面 | Base FV（A） | MOS（C） | 等级/三灯/动作 | 判断 |
+|---:|---|---|---:|:---:|---:|---:|---|---|
+| 1 | Uber UBER | US | $66.70 | B | $85 | 21.5% | L3；🟢🟡🟢；小仓 | FCF收益率较高，自动驾驶风险大 |
+| 2 | 宇通 600066 | CN | ¥28.03 | A | ¥33 | 15.1% | L3；🟢🟡🟡；小仓 | 现金回报强，出口待验 |
+| 3 | Intuit INTU | US | $343.39 | B | $410 | 16.2% | L3；🟢🟢🟡；小仓 | 软件盈利质量较好 |
+| 4 | 腾讯 0700 | HK | HK$386.00 | A | HK$480 | 19.6% | L3；🟢🟡🟡；观察 | AI现金流风险待核 |
+| 5 | 安踏 2020 | HK | HK$75.30 | A | HK$91 | 17.3% | L3；🟡🟡🟡；观察 | 成熟品牌增长承压 |
+| 6 | 招行 600036 | CN | ¥41.77 | A | ¥48 | 13.0% | L3；🟡🟢🟡；小仓 | 资产质量较好，息差承压 |
+| 7 | 美国运通 AXP | US | $313.22 | A | $360 | 13.0% | L3；🟡🟢🟡；小仓 | 调整后盈利较清晰 |
+| 8 | Progressive PGR | US | $228.07 | A | $250 | 8.8% | L3；🟡🟢🟡；观察 | 承保质量较好，MOS小 |
+| 9 | 东鹏H 9980 | HK | HK$94.05 | A | HK$124 | 24.2% | L3；🟢🟡🟡；小仓 | 赔率高但FCF待核 |
+| 10 | 中国财险 2328 | HK | HK$15.23 | B | HK$18 | 15.4% | L3；🟢🟢🟡；小仓 | 承保质量是关键 |
+
+跨市场CAGR以各自交易货币计算，不含汇率变化。FV与MOS为条件性模型；没有Strong Buy L5，本期也没有经充分验证后可明确给Level 4的机会。
+
+## 科技与产业
+
+### 1. 开发者界面从聊天框转向可治理的多步Agent
+GitHub指出，Agent可以读取仓库、理解依赖、编辑代码、运行测试并根据失败迭代。工程价值不只是更快生成代码，而是把计划、执行、验证与权限控制连成一体。建议Coding基准同时记录任务成功率、回归测试、工具成本和人工返工率。[GitHub开发者界面趋势](https://github.blog/news-insights/company-news/the-next-developer-interface-is-ambient-intelligence/)
+
+### 2. ReviewBench强调真实PR、严重度与线上验证
+GitHub ReviewBench基于代表性PR与多源黄金标注，区分grounded precision/recall和augmented precision/recall，并报告离线指标与线上实验方向一致。不要只算评论数量或单一F1；应分严重度、误报、漏报、被开发者采纳率和每次review成本。[ReviewBench](https://github.blog/ai-and-ml/reviewbench-an-open-benchmark-for-ai-code-review/)
+
+### 3. 企业Agent平台竞争焦点是工作流、技能与权限
+Google Cloud的Gemini agent定位为跨文档、邮箱、分析与开发环境的通用Agent，并强调模型选择、成本控制和治理。对实际工程而言，技能、MCP、权限边界和审计日志比堆叠Prompt更重要。[Gemini agent官方说明](https://cloud.google.com/blog/products/ai-machine-learning/welcome-to-gemini-at-work-2026)
+
+## AI与RSI
+
+### RSI / 自进化重点
+
+#### 1. Anthropic GRAFT：隔离reward-hacking学习更新
+- **进展：** 10月19日提出将检测到的作弊学习更新限制在独立参数中，训练后移除；目前实验限于小模型和简单监控器。
+- **类型：** Training / Safety。
+- **新意：** 不只惩罚监控发现的作弊，而是试图局部化作弊学习，减少模型为了绕过监控而学会更隐蔽作弊。
+- **RSI启发：** 每轮保留Bad Case，建立奖励投机测试集；若分数上升但评估器被绕过，直接判失败。
+- [Anthropic GRAFT](https://alignment.anthropic.com/2026/graft/)
+
+#### 2. OpenAI前沿训练环境隔离与红队
+- **进展：** 10月23日更新训练环境安全措施，强调离线环境、隔离与高算力红队测试。
+- **类型：** Harness / Safety / Model R&D。
+- **新意：** 将安全扩展到训练和评估基础设施的权限、网络与执行边界。
+- **RSI启发：** 实验使用最小权限、隔离工作区、只读数据快照和受限网络；优化Agent不能修改自己的评估器、日志或告警配置。
+- [OpenAI研究索引](https://openai.com/research/index/)
+
+#### 3. RRSI：用正则化减少Harness在训练任务上过拟合
+- **进展：** Google Research的RRSI于9月21日发布，指出只对固定训练任务优化Harness会过拟合。
+- **类型：** Harness / Recursive RSI。
+- **新意：** 限制每个候选修改复杂度、记录被证伪假设，并将停滞搜索转向未充分探索的组件。
+- **RSI启发：** 固定模型和预算，分开报告训练任务、OOD任务与回归集；报告任务内收益和泛化变化，不能只报最佳分数。
+- [Google Research RRSI代码与论文](https://github.com/google-research/rrsi)
+
+### RSI 今日结论
+最值得深入的是GRAFT与RRSI的组合：前者约束奖励投机，后者约束Harness过拟合。对现有RSI系统，优先构建可审计的“评测→Bad Case→诊断→单变量优化→独立验证→回滚”闭环，比增加自动迭代轮数更重要。
+
+## 风险与行动
+
+### 需要重新估值的阈值
+- **宁德时代：** 冻结旧¥355 FV；核实2027E EPS连续修订、动力毛利率、全球份额和扩产ROIC。⚠️价格到位但暂停机械买入，需要重新估值。
+- **腾讯：** 旧HK$560不再作为买入线；以Q3 Capex、折旧、云/广告变现和正常化FCF重建模型。
+- **安踏：** 主品牌/FILA零售承压，PUMA投资回报待验；更新成熟品牌增速和资本回报。
+- **NVDA/AVGO/MSFT/AMZN/META/GOOGL：** 将AI Capex、折旧、客户融资、增量ROIC和净稀释纳入Bear/Base。
+- **PDD：** 正常化Temu利润，检查商家投入与海外监管。
+- **NFLX：** 跟踪Engagement→Churn→Content Spend→Margin→FCF。
+- **中海油：** 使用中周期Brent、桶油成本、产量与可持续分红。
+- **中国移动：** 验证算力云新增利润能否抵消通信业务利润下滑。
+
+### 最终七问
+1. **A股优先研究三只：** 宇通客车、招商银行、东鹏饮料。
+2. **港股优先研究三只：** 腾讯、安踏、东鹏饮料H。
+3. **美股优先研究三只：** Uber、Intuit、美国运通。
+4. **跨市场Top10：** Uber、宇通、Intuit、腾讯、安踏、招行、美国运通、Progressive、东鹏H、中国财险。
+5. **只有一笔新资金：** 优先研究Uber正常化FCF，但核实股权激励、自动驾驶竞争和每股FCF增长前不重仓。
+6. **最需重估：** 宁德、腾讯、安踏、东鹏H、NVDA、META、AVGO、PDD。
+7. **进入/退出：** 本期A股、港股、美股各自Top10无经核实的强制换股；跨市场总榜依现金流可验证性排序，成员与上一期相比暂不变。
+
+Base Case回报主要来自正常化每股盈利/FCF增长、股息和净回购，不依赖PE无限扩张。当前无Strong Buy L5；所有模型FV、MOS和CAGR均应在新财报或关键假设变化后重新校准。
