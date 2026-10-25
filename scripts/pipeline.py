@@ -192,7 +192,7 @@ def build(root, base):
     (out/'data/index.json').write_text(json.dumps({'timezone':'Asia/Shanghai','reports':index},ensure_ascii=False,indent=2)+'\n')
     cards=''.join(f'<a class="report-card" href="reports/{r["date"]}.html"><span class="date">{r["date"]}</span><span><strong>{html.escape(r["title"])}</strong><small>完整正文 · Markdown / JSON</small></span><span class="arrow">↗</span></a>' for r in reports)
     empty='<div class="empty"><h2>等待首份完整日报</h2><p>发布基础设施已准备。收到真实报告后，这里会显示完整正文、历史归档与排名变化。</p></div>'
-    topic_cards=''.join(f'<a class="topic-card" href="topics/{key}.html"><span class="eyebrow">{key.upper()}</span><h2>{title}</h2><p>{desc}</p><span>进入栏目 ↗</span></a>' for key,title,desc in [('finance','金融与投资','A股、港股、美股 · 长期价值 · Top10变动'),('technology','科技与AI','关键技术、模型与Agent、产业进展'),('ai-rsi','前沿动态','日报中的AI与RSI研究线索')])
+    topic_cards=''.join(f'<a class="topic-card" href="{url}"><span class="eyebrow">{key}</span><h2>{title}</h2><p>{desc}</p><span>进入栏目 ↗</span></a>' for key,title,desc,url in [('DAILY','每日简报','每天一份综合观察，连接各个关注方向','daily.html'),('RESEARCH','RSI研究','自进化前沿、论文精读与研究笔记','research.html'),('TECHNOLOGY','科技与AI','关键技术、模型与Agent、产业进展','topics/technology.html'),('FINANCE','金融与投资','三市场长期价值、估值与Top10变动','topics/finance.html'),('NOTES','专题笔记','随时积累问题、证据与独立思考','notes.html')])
     body=f'''<main>
 <section class="hero">
 <span class="eyebrow">FINANCE / TECHNOLOGY / AI</span>
@@ -202,12 +202,12 @@ def build(root, base):
 </section>
 <div class="stats">
 <div>
-<strong>{len(reports):03}</strong>
-<span>已归档完整日报</span>
+<strong>{len(reports)+len(articles):03}</strong>
+<span>已归档日报与文章</span>
 </div>
 <div>
 <strong>08:00</strong>
-<span>北京时间 · 分析启动时间</span>
+<span>北京时间 · 日报计划时间</span>
 </div>
 <div>
 <strong>1</strong>
