@@ -1,5 +1,9 @@
 # 发布状态与继续接入
 
+## 2026-10-27 仓库改名
+
+当前公开仓库：https://github.com/aprilvkuo/daily-observations 。仓库 ID 1432771914 不变，旧仓库地址作为历史记录保留。网站仍为 https://brief.egguo.com/ ，SITE_URL 不变。Make 8162821 的 dispatch 地址及返回的 Actions 链接已同步至新名称。下面按日期记录的旧地址属于当时快照。
+
 核查日期：2026-10-25（Asia/Shanghai）。
 
 ## 已验证

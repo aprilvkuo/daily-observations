@@ -238,7 +238,7 @@ def build(root, base):
     return len(reports)
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('action',choices=['build','ingest-event']);parser.add_argument('--base-url',default=os.environ.get('SITE_URL','https://aprilvkuo.github.io/investment-report'));args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('action',choices=['build','ingest-event']);parser.add_argument('--base-url',default=os.environ.get('SITE_URL','https://aprilvkuo.github.io/daily-observations'));args=parser.parse_args()
     if args.action=='ingest-event':
         event=json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
         payload=event.get('client_payload',{})
