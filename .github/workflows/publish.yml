@@ -44,7 +44,7 @@ jobs:
           fi
       - name: Build static archive and full RSS
         env:
-          SITE_URL: ${{ vars.SITE_URL || 'https://aprilvkuo.github.io/investment-report' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://aprilvkuo.github.io/daily-observations' }}
         run: python scripts/pipeline.py build
       - uses: actions/upload-pages-artifact@v3
         with:

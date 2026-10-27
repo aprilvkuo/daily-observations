@@ -2,7 +2,7 @@
 
 目标是将两个既有08:00任务合并为一个“每日观察日报”（任务合并尚未执行）。这里负责发布，不运行任何模型、不新增分析定时器，也不发送飞书/邮件消息。分析完成后，完整日报进入 Make → GitHub → GitHub Pages → RSS。
 
-- 临时地址：https://aprilvkuo.github.io/investment-report/
+- 临时地址：https://aprilvkuo.github.io/daily-observations/
 - 目标域名：https://invest.egguo.com/ （DNS/HTTPS 验证通过后启用）
 - 统一完整订阅：站点下 `feed.xml`，每期只有一个条目，含所有栏目
 - 历史：`reports/YYYY/MM/YYYY-MM-DD.{md,json}`，同时生成网页版
@@ -28,7 +28,7 @@ Make on-demand 场景接收 `dispatch_json`（完整 GitHub dispatch JSON 文本
 
 `top10` 单条：`{"market":"US","symbol":"EXAMPLE","name":"公司名","rank":1}`。market 仅 CN/HK/US，rank 1–10 且唯一。仅提取原日报明确给出的总Top10；若原报告没有结构化榜单，传空数组，不另作分析。可以保留额外估值、货币、数据截至时间等原始字段。`full_daily` 是发送者对完整性的声明；脚本无法判断观点是否充分或数据是否真实。
 
-GitHub 接收 `POST /repos/aprilvkuo/investment-report/dispatches`：
+GitHub 接收 `POST /repos/aprilvkuo/daily-observations/dispatches`：
 
 ```json
 {"event_type":"publish-report","client_payload":{"report":{ "完整报告对象": "按上述结构" }}}
@@ -125,7 +125,7 @@ Make场景8162821接收上述完整JSON文本作为dispatch_json。仅验证时�
 - 专题笔记：`notes.html`
 - 独立文章：`articles/slug.html`
 
-站名“每日观察”覆盖多种主题。新目标域名为 `brief.egguo.com`，取代尚未配置的invest.egguo.com；以实际DNS、Pages域名配置与HTTPS核验结果为准。仓库仍复用investment-report，不会影响已有blog或stock_agent。
+站名“每日观察”覆盖多种主题。新目标域名为 `brief.egguo.com`，取代尚未配置的invest.egguo.com；以实际DNS、Pages域名配置与HTTPS核验结果为准。仓库仍复用daily-observations，不会影响已有blog或stock_agent。
 
 ## 研究知识库改版
 
