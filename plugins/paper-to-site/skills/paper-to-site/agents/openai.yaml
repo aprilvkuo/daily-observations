@@ -1,0 +1,6 @@
+interface:
+  display_name: "论文解读与发布"
+  short_description: "从论文链接、PDF或聊天讨论生成有来源的解读，并提交每日观察审阅"
+  default_prompt: "使用 $paper-to-site 解读我提供的论文或整理当前讨论，提交到每日观察供审阅。"
+policy:
+  allow_implicit_invocation: true
