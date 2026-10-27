@@ -45,7 +45,12 @@ GitHub 接收 `POST /repos/aprilvkuo/investment-report/dispatches`：
 ## 本地验证
 
 ```sh
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
+node tests/test_compare.cjs
+node tests/test_library.cjs
 python3 scripts/pipeline.py build
 python3 -m http.server 8080 --directory dist
 ```
@@ -101,7 +106,7 @@ git push
 
 分类可选 `rsi`、`technology`、`finance`、`notes`。工具自动生成 `articles/slug.md` 和 `articles/slug.json`，避免手工维护两份正文。修改已有文章需显式添加 `--replace`，审阅差异后提交，Git保留历史。原稿无日期时使用当前北京时间，也可指定 `--date YYYY-MM-DD`。
 
-文章更新沿用同一RSS guid；是否提示修订取决于订阅器。网站更新由每次push自动触发，不需要手动上传生成的HTML。统一feed.xml同时包含日报和独立文章。
+文章更新沿用同一RSS guid；是否提示修订取决于订阅器。网站更新由合并到 main 后的 push 自动触发，不需要手动上传生成的HTML。统一feed.xml同时包含日报和独立文章。日常开发请创建分支并提交 PR，检查工作流只构建预览，不部署。
 
 也支持通过现有Make发布入口发送：
 
@@ -121,3 +126,7 @@ Make场景8162821接收上述完整JSON文本作为dispatch_json。仅验证时�
 - 独立文章：`articles/slug.html`
 
 站名“每日观察”覆盖多种主题。新目标域名为 `brief.egguo.com`，取代尚未配置的invest.egguo.com；以实际DNS、Pages域名配置与HTTPS核验结果为准。仓库仍复用investment-report，不会影响已有blog或stock_agent。
+
+## 研究知识库改版
+
+论文列表、可选 arXiv 元数据、Markdown 阅读格式与 PR 预览流程见 [研究知识库发布说明](docs/research-library.md)。旧文章默认归入专题研究；论文继续使用 articles/slug.html 原址。

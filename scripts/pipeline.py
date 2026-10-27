@@ -16,6 +16,11 @@ try:
 except ModuleNotFoundError:
     from content import build_articles, article_cards, ingest_article, validate_article
 
+try:
+    from scripts.library import build_library
+except ModuleNotFoundError:
+    from library import build_library
+
 ROOT = Path(__file__).resolve().parents[1]
 TOPICS = {'overview':'今日总览','finance':'金融与市场','technology':'科技与产业','ai-rsi':'AI与RSI','actions':'风险与行动'}
 
@@ -140,20 +145,18 @@ def shell(title,body,base,relative=''):
 <link rel="alternate" type="application/rss+xml" title="每日观察完整日报" href="{base}/feed.xml">
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到正文</a>
 <header>
 <a class="brand" href="{relative}index.html">◈ 每日观察 <small>DAILY / PERSPECTIVES</small>
 </a>
-<nav>
+<nav aria-label="主导航">
 <a href="{relative}daily.html">每日简报</a>
-<a href="{relative}topics/overview.html">今日总览</a>
-<a href="{relative}topics/finance.html">金融与市场</a>
-<a href="{relative}topics/technology.html">科技与产业</a>
-<a href="{relative}topics/ai-rsi.html">AI与RSI</a>
-<a href="{relative}topics/actions.html">风险与行动</a>
-<a href="{relative}compare.html">Top10</a>
-<a href="{relative}feed.xml">RSS ↗</a>
+<a href="{relative}papers.html">论文解读</a>
+<a href="{relative}studies.html">专题研究</a>
 </nav>
-</header>{body}<footer>金融 · 科技 · AI与研究 · 保留每一次判断<br>同一份完整日报，多个阅读维度。观点与数据以各期标注为准，研究记录仅供参考。</footer>
+<div class="header-tools"><a href="{relative}compare.html">Top10</a><a href="{relative}feed.xml">RSS ↗</a></div>
+
+</header><div id="main-content" tabindex="-1">{body}</div><footer><a class="brand" href="{relative}index.html">◈ 每日观察</a><p>金融 · 科技 · AI与研究 · 保留每一次判断</p><div class="footer-links"><a href="{relative}daily.html">日报档案</a><a href="{relative}papers.html">论文解读</a><a href="{relative}studies.html">专题研究</a><a href="{relative}compare.html">Top10 历史</a><a href="{relative}feed.xml">RSS 订阅 ↗</a></div><small>观点与数据以各期标注为准，研究记录仅供参考。</small></footer>
 </body>
 </html>'''
 
@@ -201,43 +204,8 @@ def build(root, base):
     (out/'data/index.json').write_text(json.dumps({'timezone':'Asia/Shanghai','reports':index},ensure_ascii=False,indent=2)+'\n')
     cards=''.join(f'<a class="report-card" href="reports/{r["date"]}.html"><span class="date">{r["date"]}</span><span><strong>{html.escape(r["title"])}</strong><small>完整正文 · Markdown / JSON</small></span><span class="arrow">↗</span></a>' for r in reports)
     empty='<div class="empty"><h2>等待首份完整日报</h2><p>发布基础设施已准备。收到真实报告后，这里会显示完整正文、历史归档与排名变化。</p></div>'
-    topic_cards=''.join(
-        f'<a class="topic-card" href="topics/{slug}.html"><span class="eyebrow">{slug.upper()}</span>'
-        f'<h2>{title}</h2><p>{sum(bool(p["markdown"].strip()) for r in reports for p in sections(r["markdown"]) if p["id"]==slug)} 期日报 · {desc}</p><span>阅读栏目 ↗</span></a>'
-        for slug,title,desc in [(key,title,{'overview':'当天重点与核心判断','finance':'三市场估值与榜单','technology':'技术、工具与产业变化','ai-rsi':'AI与自进化研究前沿','actions':'风险、待核实事项与下一步'}[key]) for key,title in TOPICS.items()])
-    body=f'''<main>
-<section class="hero">
-<span class="eyebrow">FINANCE / TECHNOLOGY / AI</span>
-<h1>看见变化，形成判断。</h1>
-<p>从RSI前沿研究到科技产业，从金融市场到专题思考。用每日简报捕捉变化，用独立文章积累判断。</p>
-<a class="button" href="feed.xml">订阅统一日报 RSS ↗</a>
-</section>
-<div class="stats">
-<div>
-<strong>{len(reports)+len(articles):03}</strong>
-<span>已归档日报与文章</span>
-</div>
-<div>
-<strong>08:00</strong>
-<span>北京时间 · 日报计划时间</span>
-</div>
-<div>
-<strong>1</strong>
-<span>统一日报 / 统一订阅</span>
-</div>
-</div>
-<section class="topic-grid">{topic_cards}</section>
-<section>
-<div class="section-head">
-<h2>完整日报档案</h2>
-<span>多个维度 / 一份原文</span>
-</div>
-<p class="muted">{'最新报告：'+reports[0]['date'] if reports else '尚无报告；统一任务与发布接入待核验。'} · 完成分析后发布，缺失日期不补造。</p>{cards or empty}</section>
-</main>'''
     (out/'daily.html').write_text(shell('每日简报',f'<main><section class="hero compact"><span class="eyebrow">DAILY BRIEF</span><h1>每日简报</h1><p>每天一份完整报告，覆盖金融、科技与前沿研究。</p></section><section>{cards or empty}</section></main>',base))
-    featured=('<section><div class="section-head"><h2>独立文章与专题笔记</h2></div>'+article_cards(articles[:5])+'</section>') if articles else ''
-    body=body.replace('</main>',featured+'</main>')
-    (out/'index.html').write_text(shell('首页',body,base))
+    build_library(out,base,reports,articles,shell,TOPICS)
     compare='''<main><section class="hero compact"><span class="eyebrow">RANKING / HISTORY</span><h1>变化，比名次更重要。</h1><p>查看当期榜单；累积两期后可比较同一市场与代码的排名，新进、退出与名次移动单独记录。</p></section><section><div class="controls"><label>当前日期<select id="current"></select></label><label>比较日期<select id="previous"></select></label><label>市场<select id="market"><option value="all">全部市场</option><option value="CN">A股</option><option value="HK">港股</option><option value="US">美股</option></select></label></div><p id="status" class="muted" aria-live="polite">正在读取档案…</p><div id="comparison" class="table-scroll"></div></section></main><script src="assets/compare.js" defer></script>'''
     (out/'compare.html').write_text(shell('Top10 历史比较',compare,base))
     (out/'topics').mkdir()
