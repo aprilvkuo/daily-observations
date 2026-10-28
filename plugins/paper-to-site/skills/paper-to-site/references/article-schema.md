@@ -40,6 +40,6 @@
 
 创建前检索 `articles/*.json` 的 paper.arxiv_id（去除尾部v数字比较）、URL和标题。已存在同一论文时沿用 slug，并读取原 JSON/Markdown。
 
-修订默认保留原 `date` 和 `generated_at`；更新 paper.arxiv_id、版本URL和正文，在正文注明实际修订日期及变化。不要保留旧date同时把generated_at改成今天，这会被验证器拒绝。需要按今天重新进入解读列表时，先按用户明确意图同步更新date和generated_at，并在PR说明排序/RSS日期会变化。
+修订默认保留原 `date` 和 `generated_at`；更新 paper.arxiv_id、版本URL和正文，在正文注明实际修订日期及变化。不要保留旧date同时把generated_at改成今天，这会被验证器拒绝。需要按今天重新进入解读列表时，先按用户明确意图同步更新date和generated_at，并在发布结果或审阅PR中说明排序/RSS日期会变化。
 
 用完整文章 JSON 提交时先调用仓库验证器；用 `scripts/content.py --metadata-json` 时，该元数据文件只包含 `content_type`、`tags`、`paper`，不包含整篇文章外层字段。

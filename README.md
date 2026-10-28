@@ -131,4 +131,4 @@ Make场景8162821接收上述完整JSON文本作为dispatch_json。仅验证时�
 
 论文列表、可选 arXiv 元数据、Markdown 阅读格式与 PR 预览流程见 [研究知识库发布说明](docs/research-library.md)。旧文章默认归入专题研究；论文继续使用 articles/slug.html 原址。
 
-在 Chat 中输入论文链接、PDF或整理已有讨论，可使用「论文解读与发布」技能，默认提交PR供审阅；使用方式及权限说明见 [Chat论文发布指南](docs/paper-to-site.md)。便携插件源码位于 `plugins/paper-to-site`。
+在 Chat 中输入论文链接、PDF或整理已有讨论，可使用「论文解读与发布」技能。要求发布或入站时默认直接发布，明确要求审阅时才创建PR；使用方式及权限说明见 [Chat论文发布指南](docs/paper-to-site.md)。便携插件源码位于 `plugins/paper-to-site`。
