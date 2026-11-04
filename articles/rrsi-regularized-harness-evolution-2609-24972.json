@@ -1,0 +1,29 @@
+{
+  "category": "rsi",
+  "content_type": "paper",
+  "date": "2026-11-04",
+  "generated_at": "2026-11-04T14:22:06+08:00",
+  "markdown": "> **核心判断：**RRSI 把训练中防过拟合的思想引入 Harness 自我改进：不是让 Agent 什么都能改，而是限制每次改动的复杂度、过滤任务特定补丁，并删除不再有用的机制。\n\n## 为什么需要它\n\n一个 Harness 在固定 100 道题上循环进化，可能学会具体题目的路径、文件名和特殊答案，却没有变成更可靠的通用执行器。它在同一 Benchmark 上分数大涨，换一批任务可能毫无收益。根本矛盾是**修改空间越自由，越容易吸收数据特有的偶然相关**。\n\n## 核心机制：究竟进化了哪一层\n\nRRSI 把控制拆为 Proposer 与 Selector 两端：**稀疏修改预算**限制一次候选可包含的独立编辑数量，并随搜索过程收紧；**进化历史**记录尝试、分数和成本，让后续候选避免重试被证伪的假设；**停滞时探索尚未修改的模块**。Selector 里加入 **Critic** 筛掉过于任务特定的候选，**Pruner** 删除收益太小、成本太高或失效的修改。\n\n```mermaid\nflowchart LR\n A[受限提案 Proposer] --> B[候选 Harness]\n B --> C[测试与 Critic]\n C --> D[Pruner 精简]\n D --> E[保留可复用修改]\n E --> A\n```\n\n目标是找到简单、稳定、可迁移的行为机制，而不是最大化当前 evolve split 的分数。[方法 §3](https://arxiv.org/abs/2609.24972v3)。\n\n## 实验依据与可比性\n\n[论文 Table 1、Table 4](https://arxiv.org/abs/2609.24972v3) 报告，在 Gemini 3.5 Flash 的 Terminal-Bench 2.1 evolve split 中从 **64.6** 升到 **78.7（+14.1）**，SWE-bench Verified OOD 从 **76.8** 到 **79.0（+2.2）**。换成 Claude Opus 4.8，Terminal-Bench 2.1 从 **74.2** 到 **80.2**，SWE-bench Verified 从 **82.0** 到 **83.8**。论文还报告其他 OOD 任务最高 **+4.7** 点，最终 Harness 的策略 Token 比无正则进化少约 **30%**。\n\n## 局限及不应过度推断之处\n\n必须区分 evolve split 与 OOD：最高 +14.1 不是跨域平均收益。减少 Token 的结果取决于报告的特定执行设置，未必自动等于总成本下降；Proposer、Critic、Pruner 自己也消耗额外实验预算。稀疏正则会错过某些需要同时修改多个模块的有效组合。评测正确性需要验证器支撑，而不是 Critic 的主观判断。\n\n## 对 Kaggle RSI 与通用优化系统的启发\n\n对 Kaggle，RRSI 提醒我们：**即使公开验证集涨分，也要检验其他划分是否受益**。在 Harness 优化中限制一次改动的文件与模块，要求提出具体可验证的通用失败模式，记录修改成本和回滚条件。对于频繁反复修订的 Agent，维护“已证伪方案清单”甚至可能比增加 10 次搜索更有效。尤其注意不可让 Optimizer 接触官方私榜答案或隐藏验收脚本。\n\n## 原始资料\n\n- [原论文](https://arxiv.org/abs/2609.24972v3)\n- [官方代码](https://github.com/google-research/rrsi)\n\n*解读于 2026-11-04。数字为论文或项目作者报告，非独立复现。*\n",
+  "paper": {
+    "arxiv_id": "2609.24972v3",
+    "code_url": "https://github.com/google-research/rrsi",
+    "pdf_url": "https://arxiv.org/pdf/2609.24972v3",
+    "published": "2026-09-21",
+    "title": "RRSI: Regularized Recursive Self-Improvement of Agent Harnesses",
+    "url": "https://arxiv.org/abs/2609.24972v3"
+  },
+  "schema_version": 1,
+  "slug": "rrsi-regularized-harness-evolution-2609-24972",
+  "source": {
+    "producer": "paper-to-site"
+  },
+  "summary": "RRSI 用稀疏编辑、历史驱动探索、Critic 和 Pruner 约束 Harness 进化，分析分布内与分布外收益和 Token 成本。",
+  "tags": [
+    "RRSI",
+    "Regularization",
+    "Harness",
+    "Generalization",
+    "RSI"
+  ],
+  "title": "RRSI 解读：Harness 越会针对题目优化，越需要正则化"
+}
